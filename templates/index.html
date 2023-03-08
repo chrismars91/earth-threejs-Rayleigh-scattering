@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title> Earth </title>
+        <link rel="shortcut icon" href="{{url_for('static',filename='space-pics/icon.ico')}}" />
+        <!--https://icons8.com/icons/set/spaceship-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/index.css') }}">
+        <script src="{{url_for('static',filename='src/threejs.js')}}"></script>
+        <script src="{{url_for('static',filename='src/shader.js')}}"></script>
+        <script src="{{url_for('static',filename='src/lensflare.js')}}"></script>
+        <script src="{{url_for('static',filename='src/helperfunctions.js')}}"></script>
+        <script src="{{url_for('static',filename='src/controls.js')}}"></script>
+        <style></style>
+    </head>
+    <body>
+        <div class="clock">
+            <p style="margin:0" id="utc-clock">0.000</p><p style="margin:0"></p>
+        </div>
+        <canvas id="space_canvas"></canvas>
+        <script>
+
+
+const python_data = {{ python_data|safe }};
+const sun_data = python_data['sun data'];
+var sunvect = norm(sun_data);
+sunvect = [-1,0,0];
+const moon_data = python_data['moon data'];
+const km_to_threejs_ratio = .1 / 6371;
+const pi = Math.PI, tau = 2*Math.PI, pi_over2 = Math.PI/2;
+
+////// Load Sprites and Pics //////
+
+const textureLoader = new THREE.TextureLoader();
+const textureFlare0 = textureLoader.load( 
+    "https://s3-us-west-2.amazonaws.com/s.cdpn.io/122460/lens_flare_sun_512x512.jpg" 
+);
+const textureFlareHex = textureLoader.load( 
+    "https://s3-us-west-2.amazonaws.com/s.cdpn.io/122460/lens_flare_hexagon_256x256.jpg"
+);
+const textureFlareCirc = textureLoader.load(
+    "https://s3-us-west-2.amazonaws.com/s.cdpn.io/122460/lens_flare_circle_64x64.jpg"
+);
+const diffuse = textureLoader.load(
+    "{{url_for('static',filename='space-pics/8081_earthmap10k.jpg')}}"
+);
+const diffuseNight = textureLoader.load(
+    "{{url_for('static',filename='space-pics/8081_earthlights10k.jpg')}}"
+);
+const starMap = textureLoader.load(
+    "{{url_for('static',filename='space-pics/hd-white-dot-circle-icon-transparent-png-11641513643lxwxldgbbi (1).png')}}"
+) ;
+const starMap2 = textureLoader.load(
+    "{{url_for('static',filename='space-pics/sun_glow.png')}}"
+);
+const moonDay = textureLoader.load(
+    "{{url_for('static',filename='space-pics/2k_moon.jpeg')}}"
+);
+const moonNight = textureLoader.load(
+    "{{url_for('static',filename='space-pics/moonuv_dark.jpg')}}"
+);
+const satellite_flare = new THREE.SpriteMaterial({ 
+    map: textureLoader.load("{{url_for('static',filename='space-pics/satellite (3).png')}}"),
+    color: 0x5CFF5C}
+);
+const textureSaturnRing = textureLoader.load(
+    "{{url_for('static',filename='space-pics/2k_saturn_ring_alpha.png')}}"
+);
+
+////// THREEjs Setup and Meshes //////
+
+const canvas = document.getElementById("space_canvas")
+const renderer = new THREE.WebGLRenderer({antialias: true,canvas: canvas});
+//renderer.sortObjects = false;
+renderer.setSize(innerWidth,innerHeight);
+const camera = new THREE.PerspectiveCamera(25,innerWidth/innerHeight,0.1,1000);
+camera.position.z = 1.25 
+const scene = new THREE.Scene();
+const group = new THREE.Group();
+const earth = new THREE.Group();
+const ground = getGround(radius = .1);
+const sky = getSky(radius = .1); //scale for entire sim is dictated by earth radius == .1 in threejs units
+earth.add( ground );
+earth.add( sky );
+group.add( earth );
+const sun = getSun();
+group.add( sun );
+const stars = getStars();
+group.add( stars );
+const moon = getMoon(radius = 1737.4 * km_to_threejs_ratio);
+const moon_ring = addring(.075,0xd4d8dd);
+group.add( moon );
+group.add( moon_ring );
+const sat = getSat();
+group.add( sat );
+scene.add( group );
+sat.position.set(.2,.2,.2);
+group.position.set(-sat.position.x,-sat.position.y,-sat.position.z);
+
+////// Animate & Controls Setup ///
+
+var mpx = 0,mpy = 0,time = 0,dt = 30,cam_mag = 1.25,eci = true;
+const dWsidereal = 2*Math.PI/86164.1;
+var date = new Date(python_data['utc time'] + ' GMT');
+const clock = document.getElementById("utc-clock")
+updateClock(0);
+
+
+function animate(){
+    requestAnimationFrame(animate);
+    renderer.render(scene,camera); 
+    updateCamera();
+    updateClock(dt);
+    updateSun(300*sunvect[0],300*sunvect[1],300*sunvect[2]);
+    updateMoon(moon_data[0],moon_data[1],moon_data[2]);
+    if (eci){updateEci(time);}
+    else(updateEcef(time);)
+    time+=dt;
+};
+animate();
+
+        </script>
+    </body>
+</html>

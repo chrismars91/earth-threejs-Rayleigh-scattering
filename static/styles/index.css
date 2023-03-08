@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: dimgrey;
+}  
+canvas {
+    width: 100%;
+    height: 100%;
+}   
+.follower{
+    position: absolute;
+    color: #ffffff;
+    font-family: andale mono, monospace;
+    font-size: 1.2rem;
+    display:none;
+} 
+.clock{
+    font-family: andale mono, monospace;
+    color: #FFFFFF;
+    font-size: 1rem;
+    position: absolute;
+    margin-top: 2em;
+    left:90%
+}
