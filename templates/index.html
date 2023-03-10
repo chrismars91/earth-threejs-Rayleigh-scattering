@@ -117,7 +117,7 @@ function animate(){
     updateSun(300*sunvect[0],300*sunvect[1],300*sunvect[2]);
     updateMoon(moon_data[0],moon_data[1],moon_data[2]);
     if (eci){updateEci(time);}
-    else(updateEcef(time);)
+    else(updateEcef(time))
     time+=dt;
 };
 animate();
